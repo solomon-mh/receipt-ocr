@@ -1,9 +1,27 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  // output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Receipt {
+  id           String   @id @default(uuid())
+  storeName    String
+  purchaseDate DateTime
+  totalAmount  Float
+  imageUrl     String
+  createdAt    DateTime @default(now())
+  items        Item[]
+}
+
+model Item {
+  id        String  @id @default(uuid())
+  name      String
+  quantity  Int?
+  receiptId String
+  receipt   Receipt @relation(fields: [receiptId], references: [id])
 }
