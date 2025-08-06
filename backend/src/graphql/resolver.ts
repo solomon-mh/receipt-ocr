@@ -44,10 +44,7 @@ export const resolvers = {
         );
 
         const text = await extractTextFromImage(filePath);
-
         const parsed = parseReceiptText(text);
-        console.log("parsed");
-        console.log(parsed);
 
         try {
           const receipt = await prisma.receipt.create({
