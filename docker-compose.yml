@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # -------------------------------
   postgres:
@@ -8,10 +6,8 @@ services:
     container_name: postgres
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - ./backend/.env
     volumes:
       - db-data:/var/lib/postgresql/data
 
@@ -40,9 +36,6 @@ services:
       - "3000:3000"
     env_file:
       - ./frontend/.env
-    environment:
-      NODE_ENV: ${NODE_ENV}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     depends_on:
       - backend
     networks:
