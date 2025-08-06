@@ -23,6 +23,19 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const MAX_FILE_SIZE_MB = 5;
+
+    if (!file) return;
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Invalid file type. Only JPG , PNG and PDF are allowed.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setError("File is too large. Maximum size is 5MB.");
+      return;
+    }
     setFile(e.target.files?.[0] || null);
     setReceipt(null);
     setError(null);
@@ -40,9 +53,7 @@ export default function Home() {
         setError(result.uploadReceipt?.message || "Extraction failed.");
         setReceipt(null);
       }
-    } catch (error) {
-      console.log(error);
-
+    } catch {
       setError("Something went wrong.");
       setReceipt(null);
     } finally {
@@ -189,7 +200,7 @@ export default function Home() {
                 <div className="bg-white p-4 rounded-lg shadow-sm md:col-span-2">
                   <p className="text-sm text-gray-500">Total Amount</p>
                   <p className="font-bold text-xl text-indigo-700">
-                    ${receipt.totalAmount.toFixed(2)}
+                    {receipt.totalAmount.toFixed(2)} Birr
                   </p>
                 </div>
               </div>
