@@ -32,6 +32,7 @@ export const uploadReceipt = async (file: File) => {
       query: UPLOAD_RECEIPT,
       variables: { file: null },
     })
+    // 0916845833
   );
   formData.append("map", JSON.stringify({ "0": ["variables.file"] }));
   formData.append("0", file);
@@ -40,8 +41,11 @@ export const uploadReceipt = async (file: File) => {
     method: "POST",
     body: formData,
   });
-  console.log("res");
-  console.log(res);
+  const json = await res.json();
+  console.log("GraphQL response:", json);
+  if (json.errors) {
+    throw new Error(JSON.stringify(json.errors));
+  }
 
-  return res.json();
+  return json.data;
 };
