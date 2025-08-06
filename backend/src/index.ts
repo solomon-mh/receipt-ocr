@@ -2,8 +2,12 @@ import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolver";
-import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import fetch from "node-fetch";
+import { PrismaClient } from "./generated/prisma";
+
+// @ts-ignore
+global.fetch = fetch;
 const { graphqlUploadExpress } = require("graphql-upload");
 
 dotenv.config();
@@ -17,7 +21,7 @@ const server = new ApolloServer({
 });
 
 async function startServer() {
-  app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 1 }));
+  app.use(graphqlUploadExpress({ maxFileSize: 5000000, maxFiles: 1 }));
   await server.start();
   server.applyMiddleware({ app });
 
