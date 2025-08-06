@@ -28,6 +28,9 @@ export const resolvers = {
       }
 
       const uploadDir = process.env.UPLOAD_DIR || "public/uploads";
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
       const imageId = uuidv4();
       const filePath = path.join(uploadDir, imageId + path.extname(filename));
       const stream = createReadStream();
@@ -41,8 +44,6 @@ export const resolvers = {
 
         const text = await extractTextFromImage(filePath);
         const parsed = parseReceiptText(text);
-        console.log("✅ File saved at", parsed);
-
         const receipt = await prisma.receipt.create({
           data: {
             storeName: parsed.storeName,
