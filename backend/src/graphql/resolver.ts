@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { extractTextFromImage } from "../ocr/ocr";
 import { parseReceiptText } from "../ocr/parser";
 import GraphQLUpload = require("graphql-upload");
+import { PrismaClientKnownRequestError } from "../generated/prisma/runtime/library";
 
 export const resolvers = {
   Upload: GraphQLUpload,
@@ -23,7 +24,7 @@ export const resolvers = {
       const actualFile = await file.promise;
       const { createReadStream, filename, mimetype } = await actualFile;
       const { prisma } = context;
-      if (!["image/jpeg", "image/png"].includes(mimetype)) {
+      if (!["image/jpeg", "image/png", "application/pdf"].includes(mimetype)) {
         return { success: false, message: "Invalid file type" };
       }
 
@@ -43,35 +44,51 @@ export const resolvers = {
         );
 
         const text = await extractTextFromImage(filePath);
-        const parsed = parseReceiptText(text);
-        const receipt = await prisma.receipt.create({
-          data: {
-            storeName: parsed.storeName,
-            purchaseDate: parsed.purchaseDate,
-            totalAmount: parsed.totalAmount,
-            imageUrl: filePath,
-            items: {
-              create: parsed.items.map((item: any) => ({
-                name: item.name,
-                quantity: item.quantity,
-              })),
-            },
-          },
-          include: { items: true },
-        });
 
-        return {
-          success: true,
-          message: "Receipt processed successfully",
-          receipt,
-        };
-      } catch (err) {
-        console.error("❌ Error during file save or parsing:", err);
-        return {
-          success: false,
-          message: "Failed to process uploaded receipt",
-          error: err instanceof Error ? err.message : String(err),
-        };
+        const parsed = parseReceiptText(text);
+        console.log("parsed");
+        console.log(parsed);
+
+        try {
+          const receipt = await prisma.receipt.create({
+            data: {
+              storeName: parsed.storeName,
+              purchaseDate: parsed.purchaseDate,
+              totalAmount: parsed.totalAmount,
+              imageUrl: filePath,
+              items: {
+                create: parsed.items.map((item: any) => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                })),
+              },
+            },
+            include: { items: true },
+          });
+
+          return {
+            success: true,
+            message: "Receipt processed successfully",
+            receipt,
+          };
+        } catch (err) {
+          console.error("❌ Error during file save or parsing:", err);
+          return {
+            success: false,
+            message: "Failed to process uploaded receipt",
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) {
+          console.error(`Prisma error code: ${error.code} - ${error.message}`);
+          if (error.code === "P2002") {
+            console.error("Duplicate record detected");
+          }
+        } else {
+          console.error("Unexpected error:", error);
+        }
+        throw error;
       }
     },
   },
