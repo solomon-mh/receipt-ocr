@@ -181,7 +181,9 @@ export default function Home() {
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                   <p className="text-sm text-gray-500">Date</p>
                   <p className="font-medium text-indigo-700">
-                    {new Date(receipt.purchaseDate).toLocaleDateString()}
+                    {new Date(
+                      Number(receipt.purchaseDate)
+                    ).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm md:col-span-2">
