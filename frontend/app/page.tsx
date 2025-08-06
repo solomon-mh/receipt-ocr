@@ -55,7 +55,7 @@ export default function Home() {
       <div className="max-w-2xl mx-auto">
         {/* Animated Header */}
         <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold text-indigo-900 mb-2 animate-gradient bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text">
+          <h1 className="text-5xl font-bold text-indigo-900 mb-2 animate-gradient bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
             Shewaber
           </h1>
           <p className="text-indigo-600 opacity-80">Smart Receipt Processing</p>
