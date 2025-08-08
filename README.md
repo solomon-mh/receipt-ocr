@@ -93,8 +93,8 @@ receipt-ocr-app/
    npm run dev
    ```
 
-   <!-- Optional if you want to run in separetely -->
-   <!-- Optional if you want to run in separetely -->
+   **Optional if you want to run in separetely**
+   **Optional if you want to run in separetely**
 
 5. **Start the backend server:**
 
