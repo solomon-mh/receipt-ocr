@@ -123,15 +123,14 @@ export const parseReceiptText = (text: string): ParsedReceipt => {
   ];
 
   // Regex to extract price with optional currency and decimal separator (dot or comma)
-  const priceRegex = /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/;
+  const priceRegex = /(?:\$)?\s*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/;
 
   let totalAmount = 0;
   for (const line of [...lines].reverse()) {
     const lineLower = line.toLowerCase();
-    const hasTotalKeyword = totalKeywords.some((kw) => {
-      // Use similarity to allow minor OCR typos
-      return similarity(kw, lineLower) > 0.6;
-    });
+    // Simplified check for total keyword presence
+    const hasTotalKeyword = totalKeywords.some((kw) => lineLower.includes(kw));
+
     if (hasTotalKeyword) {
       const priceMatch = line.match(priceRegex);
       if (priceMatch) {
