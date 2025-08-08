@@ -23,6 +23,8 @@ receipt-ocr-app/
 │ ├── public/ # Static assets
 │ ├── src/
 │ │ ├── app/
+│ │ ├── graphql/
+│ │ ├── ocr/
 │ │ ├── utils/ # Helpers
 │ ├── .env
 │ ├── Dockerfile
