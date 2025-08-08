@@ -152,29 +152,4 @@ docker-compose up --build
 
 Feel free to open issues or submit pull requests with new features or bug fixes.
 
-```
-
-To download this as a file:
-
-1. Copy the entire content above
-2. Create a new file named `README.md` in your preferred text editor
-3. Paste the content
-4. Save the file
-
-The syntax is now properly formatted with:
-
-- Correct markdown headers
-- Proper code block formatting
-- Fixed numbering in the instructions
-- Consistent bullet point formatting
-- Proper indentation for the folder structure diagram
-
-```
-
-```
-
-```
-
-```
-
-```
+``
