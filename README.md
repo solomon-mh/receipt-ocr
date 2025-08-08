@@ -62,6 +62,12 @@ receipt-ocr-app/
 
 2. **Install dependencies:**
 
+   root:
+
+   ```bash
+   npm install
+   ```
+
    Backend:
 
    ```bash
@@ -69,30 +75,40 @@ receipt-ocr-app/
    npm install
    ```
 
-   Frontend:
+````
 
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+Frontend:
+
+```bash
+cd ../frontend
+npm install
+```
 
 3. **Configure environment variables:**
 
    - Copy `.env.example` to `.env` in both backend and frontend folders
    - Update the variables accordingly
 
-4. **Start the backend server:**
+4. **Start from root (in a new terminal):**
+
+   ```bash
+   npm run dev
+   ```
+<!-- Optional if you want to run in separetely -->
+<!-- Optional if you want to run in separetely -->
+
+5. **Start the backend server:**
 
    ```bash
    cd backend
-   npm start
+   npm run dev
    ```
 
-5. **Start the frontend client (in a new terminal):**
+6. **Start the frontend client (in a new terminal):**
 
    ```bash
    cd frontend
-   npm start
+   npm run dev
    ```
 
 ## 🐳 Docker Setup
@@ -153,3 +169,4 @@ docker-compose up --build
 Feel free to open issues or submit pull requests with new features or bug fixes.
 
 ``
+````
