@@ -4,7 +4,7 @@ import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolver";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
-import { PrismaClient } from "./generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 // @ts-ignore
 global.fetch = fetch;
