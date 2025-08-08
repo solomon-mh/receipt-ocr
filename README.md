@@ -60,8 +60,6 @@ receipt-ocr-app/
    cd receipt-ocr-app
    ```
 
-````
-
 2. **Install dependencies:**
 
    Backend:
@@ -96,6 +94,7 @@ receipt-ocr-app/
    cd frontend
    npm start
    ```
+
 ## 🐳 Docker Setup
 
 ### Prerequisites
@@ -110,8 +109,7 @@ docker-compose up --build
 
 6. **Access the application:**
    - Open your browser and go to `http://localhost:3000`
-
----
+```
 
 ## 🛠 How to Extend the App
 
@@ -174,4 +172,9 @@ The syntax is now properly formatted with:
 ```
 
 ```
-````
+
+```
+
+```
+
+```
