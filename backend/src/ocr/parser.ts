@@ -1,3 +1,4 @@
+// receiptParser.ts
 type ReceiptItem = {
   name: string;
   quantity: number;
@@ -6,184 +7,248 @@ type ReceiptItem = {
 
 type ParsedReceipt = {
   storeName: string;
-  purchaseDate: Date | null;
+  purchaseDate: Date;
   totalAmount: number;
   items: ReceiptItem[];
 };
 
-const similarity = (s1: string, s2: string) => {
-  // Simple case-insensitive similarity: counts matching chars in order
-  s1 = s1.toLowerCase();
-  s2 = s2.toLowerCase();
-  let matches = 0;
-  for (let i = 0, j = 0; i < s1.length && j < s2.length; ) {
-    if (s1[i] === s2[j]) {
-      matches++;
-      i++;
-      j++;
-    } else if (s1[i] < s2[j]) {
-      i++;
-    } else {
-      j++;
+/**
+ * Parse a numeric price string like "1,234.56", "79.050", "*79.05" => number
+ */
+const parsePrice = (s: string): number | null => {
+  if (!s) return null;
+  // remove stray non-number characters except dot and comma
+  const cleaned = s.replace(/[^0-9.,-]/g, "").trim();
+  if (!cleaned) return null;
+  // normalize comma to dot (common in OCR results)
+  const normalized = cleaned.replace(/,/g, ".");
+  const n = parseFloat(normalized);
+  return isNaN(n) ? null : n;
+};
+
+/**
+ * Try to extract a Date from a text string (supports multiple formats).
+ * Returns Date | null
+ */
+const tryParseDateFromString = (s: string): Date | null => {
+  if (!s) return null;
+  // common date patterns
+  // dd/mm/yyyy | dd-mm-yyyy | dd.mm.yyyy  (also 2-digit year)
+  const dmy = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (dmy) {
+    let day = parseInt(dmy[1], 10);
+    let month = parseInt(dmy[2], 10) - 1;
+    let year = parseInt(dmy[3], 10);
+    if (year < 100) {
+      // naive 2-digit year -> 2000+ (adjust if you want different)
+      year += 2000;
     }
+    const dt = new Date(year, month, day);
+    if (!isNaN(dt.getTime())) return dt;
   }
-  return matches / Math.max(s1.length, s2.length);
+
+  // yyyy/mm/dd or yyyy-mm-dd
+  const ymd = s.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if (ymd) {
+    const year = parseInt(ymd[1], 10);
+    const month = parseInt(ymd[2], 10) - 1;
+    const day = parseInt(ymd[3], 10);
+    const dt = new Date(year, month, day);
+    if (!isNaN(dt.getTime())) return dt;
+  }
+
+  // "30 August 2024" or "30 Aug 2024"
+  const monthName = s.match(/(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})/);
+  if (monthName) {
+    const day = parseInt(monthName[1], 10);
+    const monthStr = monthName[2];
+    const year = parseInt(monthName[3], 10);
+    const dt = new Date(`${monthStr} ${day}, ${year}`);
+    if (!isNaN(dt.getTime())) return dt;
+  }
+
+  return null;
 };
 
 export const parseReceiptText = (text: string): ParsedReceipt => {
-  const lines = text
+  const rawLines = text
     .split(/\r?\n/)
-    .map((line) => line.trim())
+    .map((l) => l.trim())
     .filter(Boolean);
 
-  // === 1. Store name detection ===
-  // Skip lines that look like addresses, phone numbers, or empty
-  const isNoiseLine = (line: string) => {
-    const phoneRegex = /(\+?\d{1,3}[-.\s]?)?(\(?\d{3}\)?[-.\s]?){1,2}\d{3,4}/;
-    const addressKeywords = [
-      "street",
-      "st.",
-      "road",
-      "rd.",
-      "ave",
-      "avenue",
-      "blvd",
-      "floor",
-      "suite",
-      "phone",
-      "tel",
-      "fax",
-    ];
-    if (phoneRegex.test(line.toLowerCase())) return true;
-    if (addressKeywords.some((kw) => line.toLowerCase().includes(kw)))
-      return true;
-    if (line.length < 2) return true;
-    return false;
-  };
+  // Normalize lines: remove repeated internal spaces, remove leading/trailing stars
+  const lines = rawLines.map((l) =>
+    l
+      .replace(/\*/g, "") // remove stars OCR sometimes adds
+      .replace(/\s{2,}/g, " ")
+      .trim()
+  );
 
+  // === store name detection: look for keywords like "coffee", "cafe", "shop" within first 10 lines ===
+  const storeKeywords = [
+    "coffee",
+    "cafe",
+    "shop",
+    "store",
+    "mart",
+    "bakery",
+    "bar",
+  ];
   let storeName = "Unknown Store";
-  for (let i = 0; i < Math.min(5, lines.length); i++) {
-    if (!isNoiseLine(lines[i])) {
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    const l = lines[i].toLowerCase();
+    if (storeKeywords.some((kw) => l.includes(kw))) {
       storeName = lines[i];
       break;
     }
   }
+  // fallback: first non-empty line
+  if (storeName === "Unknown Store" && lines.length > 0) {
+    storeName = lines[0];
+  }
 
-  // === 2. Purchase date detection (support multiple formats) ===
-  const datePatterns = [
-    /\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\b/, // yyyy-mm-dd or yyyy/mm/dd
-    /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/, // dd-mm-yyyy or dd/mm/yyyy
-    /\b(\d{1,2})\s([A-Za-z]{3,9})\s(\d{4})\b/, // e.g. 12 March 2023
-  ];
-
+  // === purchase date detection: scan every line for a date ===
   let purchaseDate: Date | null = null;
-  outer: for (const line of lines) {
-    for (const regex of datePatterns) {
-      const match = line.match(regex);
-      if (match) {
-        try {
-          // Parse date based on format
-          let dt: Date | null = null;
-          if (regex === datePatterns[0]) {
-            // yyyy-mm-dd
-            dt = new Date(
-              parseInt(match[1]),
-              parseInt(match[2]) - 1,
-              parseInt(match[3])
-            );
-          } else if (regex === datePatterns[1]) {
-            // dd-mm-yyyy
-            dt = new Date(
-              parseInt(match[3]),
-              parseInt(match[2]) - 1,
-              parseInt(match[1])
-            );
-          } else if (regex === datePatterns[2]) {
-            // dd Month yyyy
-            dt = new Date(`${match[2]} ${match[1]}, ${match[3]}`);
-          }
-          if (dt && !isNaN(dt.getTime())) {
-            purchaseDate = dt;
-            break outer;
-          }
-        } catch {
-          // ignore parse error and try next
+  for (const l of lines) {
+    const dt = tryParseDateFromString(l);
+    if (dt) {
+      purchaseDate = dt;
+      break;
+    }
+  }
+  // fallback: use "now" to avoid Prisma null error. If you prefer null, change this.
+  if (!purchaseDate) purchaseDate = new Date();
+
+  // === total amount detection ===
+  const totalKeywords = [
+    "total",
+    "amount due",
+    "amount payable",
+    "total due",
+    "balance",
+    "amt due",
+  ];
+  let totalAmount = 0;
+  // search from bottom for a line containing keywords and a price
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const l = lines[i].toLowerCase();
+    if (totalKeywords.some((kw) => l.includes(kw))) {
+      const priceMatch = lines[i].match(/(\d+[.,]\d{2,3})/);
+      if (priceMatch) {
+        const p = parsePrice(priceMatch[1]);
+        if (p !== null) {
+          totalAmount = p;
+          break;
         }
       }
     }
   }
-
-  // === 3. Total amount detection with fuzzy matching ===
-  const totalKeywords = [
-    "total",
-    "amount due",
-    "balance due",
-    "amount payable",
-    "total due",
-  ];
-
-  // Regex to extract price with optional currency and decimal separator (dot or comma)
-  const priceRegex = /(?:\$)?\s*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/;
-
-  let totalAmount = 0;
-  for (const line of [...lines].reverse()) {
-    const lineLower = line.toLowerCase();
-    // Simplified check for total keyword presence
-    const hasTotalKeyword = totalKeywords.some((kw) => lineLower.includes(kw));
-
-    if (hasTotalKeyword) {
-      const priceMatch = line.match(priceRegex);
-      if (priceMatch) {
-        const normalizedPrice = priceMatch[1].replace(/,/g, ".");
-        totalAmount = parseFloat(normalizedPrice);
-        if (!isNaN(totalAmount)) break;
-      }
-    }
+  // fallback: largest decimal number found (only decimals with 2+ digits after decimal)
+  if (!totalAmount) {
+    const allPrices = text.match(/(\d+[.,]\d{2,3})/g) || [];
+    const nums = allPrices
+      .map((p) => parsePrice(p))
+      .filter((n): n is number => n !== null);
+    if (nums.length > 0) totalAmount = Math.max(...nums);
   }
 
-  // === 4. Item lines detection with quantity and price ===
-  // Skip lines that contain non-item keywords to avoid parsing totals, tax, etc.
+  // === item parsing ===
+  const items: ReceiptItem[] = [];
+  const usedLineIndex = new Set<number>();
   const nonItemKeywords = [
     "subtotal",
+    "sub total",
     "tax",
+    "t/x",
     "total",
     "balance",
     "amount",
     "change",
+    "txbl",
+    "table",
+    "cashier",
+    "waiter",
+    "ref",
+    "fs no",
+    "receipt",
+    "cash invoice",
+    "system by",
+    "tin",
+    "tel",
+    "call",
+    "erca",
+    "ser. charge",
+    "service charge",
   ];
 
-  const items: ReceiptItem[] = [];
+  // Regexes:
+  // Full-line: Name ... QTY PRICE [AMOUNT]
+  const fullItemRegex = /^(.+?)\s+(\d+)\s+([\d.,]+)(?:\s+([\d.,]+))?$/;
 
-  // Regex for item lines:
-  // Matches optional quantity at start, item name, optional x quantity suffix, price at end
-  // Examples matched:
-  // 2 Apple 5.00
-  // Apple x2 5.00
-  // Apple 5.00
-  const itemLineRegex = /^(\d+)?\s*([a-zA-Z\s]+?)\s*(?:x(\d+))?\s*([\d.,]+)$/;
+  // Number-only line (qty price [amount]) to attach to previous line
+  const qtyPriceOnlyRegex = /^(\d+)\s+([\d.,]+)(?:\s+([\d.,]+))?$/;
 
-  for (const line of lines) {
-    if (nonItemKeywords.some((kw) => line.toLowerCase().includes(kw))) continue;
+  for (let i = 0; i < lines.length; i++) {
+    if (usedLineIndex.has(i)) continue;
+    const l = lines[i];
+    const lower = l.toLowerCase();
 
-    const match = line.match(itemLineRegex);
-    if (match) {
-      let quantity = 1;
-      if (match[1]) quantity = parseInt(match[1]);
-      else if (match[3]) quantity = parseInt(match[3]);
+    // skip clearly non-item lines
+    if (nonItemKeywords.some((kw) => lower.includes(kw))) continue;
 
-      const name = match[2].trim();
-      const price = parseFloat(match[4].replace(/,/g, "."));
-
-      if (name && !isNaN(price)) {
-        items.push({ name, quantity, price });
+    // try full-line match first
+    const fullMatch = l.match(fullItemRegex);
+    if (fullMatch) {
+      const rawName = fullMatch[1].trim();
+      const qty = parseInt(fullMatch[2], 10) || 1;
+      const unitPrice = parsePrice(fullMatch[3]) ?? 0;
+      // amount in fullMatch[4] might be total line (qty * price) but we ignore it for now
+      const name = rawName;
+      if (name && qty > 0 && unitPrice > 0) {
+        items.push({ name, quantity: qty, price: unitPrice });
+        usedLineIndex.add(i);
+        continue;
       }
+    }
+
+    // if not matched, check if line is qty+price and previous line looks like item name
+    const numOnlyMatch = l.match(qtyPriceOnlyRegex);
+    if (numOnlyMatch && i - 1 >= 0 && !usedLineIndex.has(i - 1)) {
+      const prev = lines[i - 1].replace(/\*/g, "").trim();
+      const prevLower = prev.toLowerCase();
+      // ensure previous line is not header/footer
+      if (!nonItemKeywords.some((kw) => prevLower.includes(kw))) {
+        const qty = parseInt(numOnlyMatch[1], 10) || 1;
+        const unitPrice = parsePrice(numOnlyMatch[2]) ?? 0;
+        const name = prev;
+        if (name && qty > 0 && unitPrice > 0) {
+          items.push({ name, quantity: qty, price: unitPrice });
+          usedLineIndex.add(i);
+          usedLineIndex.add(i - 1);
+          continue;
+        }
+      }
+    }
+
+    // Additional heuristic: some OCRs put an asterisk or star before the amount only
+    // Example: "Double EsPriso 1 79.050 *79.05" - handled by fullItemRegex after star removal at top.
+  }
+
+  // Optional: do a quick dedupe by name+price to avoid duplicates
+  const deduped: ReceiptItem[] = [];
+  const seen = new Set<string>();
+  for (const it of items) {
+    const key = `${it.name.toLowerCase()}|${it.price}|${it.quantity}`;
+    if (!seen.has(key)) {
+      deduped.push(it);
+      seen.add(key);
     }
   }
 
   return {
     storeName,
-    purchaseDate,
-    totalAmount,
-    items,
+    purchaseDate: purchaseDate!,
+    totalAmount: totalAmount || 0,
+    items: deduped,
   };
 };
