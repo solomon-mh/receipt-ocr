@@ -75,14 +75,12 @@ receipt-ocr-app/
    npm install
    ```
 
-````
+   Frontend:
 
-Frontend:
-
-```bash
-cd ../frontend
-npm install
-```
+   ```bash
+   cd ../frontend
+   npm install
+   ```
 
 3. **Configure environment variables:**
 
@@ -94,8 +92,9 @@ npm install
    ```bash
    npm run dev
    ```
-<!-- Optional if you want to run in separetely -->
-<!-- Optional if you want to run in separetely -->
+
+   <!-- Optional if you want to run in separetely -->
+   <!-- Optional if you want to run in separetely -->
 
 5. **Start the backend server:**
 
@@ -169,4 +168,7 @@ docker-compose up --build
 Feel free to open issues or submit pull requests with new features or bug fixes.
 
 ``
-````
+
+```
+
+```
