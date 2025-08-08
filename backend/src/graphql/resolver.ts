@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { extractTextFromImage } from "../ocr/ocr";
 import { parseReceiptText } from "../ocr/parser";
 import GraphQLUpload = require("graphql-upload");
-import { PrismaClientKnownRequestError } from "../generated/prisma/runtime/library";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export const resolvers = {
   Upload: GraphQLUpload,
