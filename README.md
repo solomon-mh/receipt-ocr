@@ -11,29 +11,26 @@ receipt-ocr-app/
 │
 ├── backend/ # Backend server (Node.js + Express)
 │ ├── src/
-│ │ ├── controllers/ # API route controllers
-│ │ ├── models/ # Database models (e.g., Receipt, Item, User)
-│ │ ├── services/ # Business logic, OCR integration
-│ │ ├── routes/ # Express routes
-│ │ ├── utils/ # Helper functions and utilities
-│ │ ├── app.ts # Express app setup
-│ │ └── server.ts # Server entrypoint
+│ │ ├── index.ts
+│ │ ├──
+│ │ ├── prisma/
 │ ├── .env # Backend environment variables
+│ ├── public/
 │ ├── package.json
 │ └── tsconfig.json
 │
 ├── frontend/ # Frontend client (Next.js + Tailwind CSS)
 │ ├── public/ # Static assets
 │ ├── src/
-│ │ ├── app/ # React components
-│ │ ├── styles/ # Tailwind CSS and global styles
-│ │ ├── utils/ # Helpers and API clients
-│ │ └── App.jsx # Root React component (if CRA)
+│ │ ├── app/
+│ │ ├── utils/ # Helpers
+│ │ └── Dockerfile
 │ ├── .env # Frontend environment variables
 │ ├── package.json
 │ └── tailwind.config.js
 │
-├── docker-compose.yml # Docker compose config (if applicable)
+├── docker-compose.yml
+├── sample-recipts/  # Samepl Receipt files i used
 ├── README.md # This file
 └── .gitignore
 ```
@@ -164,4 +161,4 @@ docker-compose up --build
 
 ## 🤝 Contributing
 
-Feel free to open issues or submit pull requests with new features or bug fixes.
+Feel free to open issues or submit pull requests with new features or bug fixes.t
