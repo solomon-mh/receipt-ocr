@@ -14,7 +14,7 @@ receipt-ocr-app/
 │ │ ├── index.ts
 │ │ ├──
 │ │ ├── prisma/
-│ ├── .env # Backend environment variables
+│ ├── .env
 │ ├── public/
 │ ├── package.json
 │ └── tsconfig.json
@@ -25,7 +25,7 @@ receipt-ocr-app/
 │ │ ├── app/
 │ │ ├── utils/ # Helpers
 │ │ └── Dockerfile
-│ ├── .env # Frontend environment variables
+│ ├── .env
 │ ├── package.json
 │ └── tailwind.config.js
 │
@@ -121,6 +121,10 @@ docker-compose up --build
 6. **Access the application:**
    - Open your browser and go to `http://localhost:3000`
 ```
+
+## 🛠 SAMPLE RECEIPT FILES
+
+**I have included two sample receipts files in the sample-receipts folder**
 
 ## 🛠 How to Extend the App
 
