@@ -12,6 +12,8 @@ receipt-ocr-app/
 ├── backend/ # Backend server (Node.js + Express)
 │ ├── src/
 │ │ ├── index.ts
+│ │ ├── graphql
+│ │ ├── ocr
 │ ├── .env
 │ ├── Dockerfile
 │ ├── prisma/
@@ -23,8 +25,6 @@ receipt-ocr-app/
 │ ├── public/ # Static assets
 │ ├── src/
 │ │ ├── app/
-│ │ ├── graphql/
-│ │ ├── ocr/
 │ │ ├── utils/ # Helpers
 │ ├── .env
 │ ├── Dockerfile
