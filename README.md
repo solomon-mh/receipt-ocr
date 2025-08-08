@@ -12,9 +12,9 @@ receipt-ocr-app/
 ├── backend/ # Backend server (Node.js + Express)
 │ ├── src/
 │ │ ├── index.ts
-│ │ ├──
-│ │ ├── prisma/
 │ ├── .env
+│ ├── Dockerfile
+│ ├── prisma/
 │ ├── public/
 │ ├── package.json
 │ └── tsconfig.json
@@ -24,8 +24,8 @@ receipt-ocr-app/
 │ ├── src/
 │ │ ├── app/
 │ │ ├── utils/ # Helpers
-│ │ └── Dockerfile
 │ ├── .env
+│ ├── Dockerfile
 │ ├── package.json
 │ └── tailwind.config.js
 │
