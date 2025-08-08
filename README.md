@@ -1,4 +1,3 @@
-```markdown
 # Receipt OCR App
 
 A full-stack application for extracting and managing data from receipts using Optical Character Recognition (OCR).
@@ -6,8 +5,8 @@ A full-stack application for extracting and managing data from receipts using Op
 ---
 
 ## 📦 Folder Structure
-```
 
+```
 receipt-ocr-app/
 │
 ├── backend/ # Backend server (Node.js + Express)
@@ -37,8 +36,7 @@ receipt-ocr-app/
 ├── docker-compose.yml # Docker compose config (if applicable)
 ├── README.md # This file
 └── .gitignore
-
-````
+```
 
 ---
 
@@ -60,6 +58,8 @@ receipt-ocr-app/
    ```bash
    git clone https://github.com/your-username/receipt-ocr-app.git
    cd receipt-ocr-app
+   ```
+
 ````
 
 2. **Install dependencies:**
@@ -96,8 +96,7 @@ receipt-ocr-app/
    cd frontend
    npm start
    ```
-
-   ## 🐳 Docker Setup
+## 🐳 Docker Setup
 
 ### Prerequisites
 
@@ -175,3 +174,4 @@ The syntax is now properly formatted with:
 ```
 
 ```
+````
