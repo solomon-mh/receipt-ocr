@@ -50,6 +50,9 @@ export const parseReceiptText = (text: string): ParsedReceipt => {
       "blvd",
       "floor",
       "suite",
+      "phone",
+      "tel",
+      "fax",
     ];
     if (phoneRegex.test(line.toLowerCase())) return true;
     if (addressKeywords.some((kw) => line.toLowerCase().includes(kw)))
@@ -111,7 +114,6 @@ export const parseReceiptText = (text: string): ParsedReceipt => {
   }
 
   // === 3. Total amount detection with fuzzy matching ===
-  // Common keywords that mean total
   const totalKeywords = [
     "total",
     "amount due",
@@ -124,8 +126,7 @@ export const parseReceiptText = (text: string): ParsedReceipt => {
   const priceRegex = /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/;
 
   let totalAmount = 0;
-  for (const line of lines.reverse()) {
-    // Check if line contains a "total" like keyword approximately
+  for (const line of [...lines].reverse()) {
     const lineLower = line.toLowerCase();
     const hasTotalKeyword = totalKeywords.some((kw) => {
       // Use similarity to allow minor OCR typos
@@ -134,7 +135,6 @@ export const parseReceiptText = (text: string): ParsedReceipt => {
     if (hasTotalKeyword) {
       const priceMatch = line.match(priceRegex);
       if (priceMatch) {
-        // Normalize comma to dot
         const normalizedPrice = priceMatch[1].replace(/,/g, ".");
         totalAmount = parseFloat(normalizedPrice);
         if (!isNaN(totalAmount)) break;
@@ -143,34 +143,37 @@ export const parseReceiptText = (text: string): ParsedReceipt => {
   }
 
   // === 4. Item lines detection with quantity and price ===
-  // Item lines often look like:
-  // 2 Apple 5.00
-  // Apple x2 5,00
-  // Apple 5.00
-  // Format: [optional quantity] itemName price
-  // We'll support quantity before or after the item name with "x" or just a number
+  // Skip lines that contain non-item keywords to avoid parsing totals, tax, etc.
+  const nonItemKeywords = [
+    "subtotal",
+    "tax",
+    "total",
+    "balance",
+    "amount",
+    "change",
+  ];
 
   const items: ReceiptItem[] = [];
 
-  // Regex for line with optional quantity and price at the end
+  // Regex for item lines:
+  // Matches optional quantity at start, item name, optional x quantity suffix, price at end
   // Examples matched:
   // 2 Apple 5.00
   // Apple x2 5.00
   // Apple 5.00
-  const itemLineRegex = /^(\d+)?\s*([a-zA-Z\s]+?)\s*(x\d+)?\s*([\d.,]+)$/;
+  const itemLineRegex = /^(\d+)?\s*([a-zA-Z\s]+?)\s*(?:x(\d+))?\s*([\d.,]+)$/;
 
   for (const line of lines) {
+    if (nonItemKeywords.some((kw) => line.toLowerCase().includes(kw))) continue;
+
     const match = line.match(itemLineRegex);
     if (match) {
-      // Extract quantity
       let quantity = 1;
       if (match[1]) quantity = parseInt(match[1]);
-      else if (match[3]) quantity = parseInt(match[3].substring(1)); // remove 'x'
+      else if (match[3]) quantity = parseInt(match[3]);
 
-      // Extract name and price
       const name = match[2].trim();
-      const priceStr = match[4].replace(/,/g, ".");
-      const price = parseFloat(priceStr);
+      const price = parseFloat(match[4].replace(/,/g, "."));
 
       if (name && !isNaN(price)) {
         items.push({ name, quantity, price });
